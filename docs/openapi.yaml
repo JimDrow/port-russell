@@ -1,0 +1,404 @@
+openapi: 3.0.3
+info:
+  title: API du port de plaisance de Russell
+  version: 1.0.0
+  description: |
+    API privée de la capitainerie du port de Russell : gestion des catways,
+    des réservations et des utilisateurs.
+
+    **Authentification** : connectez-vous via `POST /login`. Un jeton JWT est
+    alors déposé dans un cookie `token` (valable 2 h). Il peut aussi être envoyé
+    dans l'en-tête `Authorization: Bearer <jeton>`.
+
+    *Note : le brief mentionne les routes `/catway/...` (sans « s ») et
+    `PUT /catways/:id/reservations` sans identifiant. Par cohérence REST,
+    toutes les routes de réservation utilisent `/catways/:id/reservations/:idReservation`.*
+
+servers:
+  - url: /
+
+tags:
+  - name: Authentification
+  - name: Catways
+  - name: Réservations
+  - name: Utilisateurs
+
+security:
+  - cookieAuth: []
+  - bearerAuth: []
+
+paths:
+  /login:
+    post:
+      tags: [Authentification]
+      summary: Se connecter
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, example: utilisateur@exemple.fr }
+                password: { type: string, example: VotreMotDePasse }
+      responses:
+        '200':
+          description: Connexion réussie (cookie `token` déposé)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                  token: { type: string }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /logout:
+    get:
+      tags: [Authentification]
+      summary: Se déconnecter (supprime le cookie et redirige vers l'accueil)
+      security: []
+      responses:
+        '302': { description: Redirection vers la page d'accueil }
+
+  /catways:
+    get:
+      tags: [Catways]
+      summary: Lister tous les catways
+      responses:
+        '200':
+          description: Liste des catways
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Catway' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+    post:
+      tags: [Catways]
+      summary: Créer un catway
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CatwayInput' }
+      responses:
+        '201':
+          description: Catway créé
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Catway' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /catways/{id}:
+    parameters:
+      - $ref: '#/components/parameters/CatwayNumber'
+    get:
+      tags: [Catways]
+      summary: Récupérer un catway
+      responses:
+        '200':
+          description: Le catway
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Catway' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      tags: [Catways]
+      summary: Modifier l'état d'un catway (numéro et type non modifiables)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [catwayState]
+              properties:
+                catwayState: { type: string, example: planche abîmée }
+      responses:
+        '200':
+          description: Catway modifié
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Catway' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      tags: [Catways]
+      summary: Supprimer un catway
+      responses:
+        '200': { $ref: '#/components/responses/Message' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /catways/{id}/reservations:
+    parameters:
+      - $ref: '#/components/parameters/CatwayNumber'
+    get:
+      tags: [Réservations]
+      summary: Lister les réservations d'un catway
+      responses:
+        '200':
+          description: Liste des réservations
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Reservation' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+    post:
+      tags: [Réservations]
+      summary: Créer une réservation sur un catway
+      description: Refusée (409) si le catway est déjà réservé sur une période qui chevauche.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ReservationInput' }
+      responses:
+        '201':
+          description: Réservation créée
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Reservation' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /catways/{id}/reservations/{idReservation}:
+    parameters:
+      - $ref: '#/components/parameters/CatwayNumber'
+      - name: idReservation
+        in: path
+        required: true
+        description: Identifiant MongoDB de la réservation
+        schema: { type: string, example: 6acdf85544b12dad2f6756da }
+    get:
+      tags: [Réservations]
+      summary: Récupérer une réservation
+      responses:
+        '200':
+          description: La réservation
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Reservation' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      tags: [Réservations]
+      summary: Modifier une réservation (seuls les champs envoyés sont modifiés)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                clientName: { type: string }
+                boatName: { type: string }
+                startDate: { type: string, format: date }
+                endDate: { type: string, format: date }
+      responses:
+        '200':
+          description: Réservation modifiée
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Reservation' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+    delete:
+      tags: [Réservations]
+      summary: Supprimer une réservation
+      responses:
+        '200': { $ref: '#/components/responses/Message' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /users:
+    get:
+      tags: [Utilisateurs]
+      summary: Lister les utilisateurs (sans mot de passe)
+      responses:
+        '200':
+          description: Liste des utilisateurs
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/User' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+    post:
+      tags: [Utilisateurs]
+      summary: Créer un utilisateur
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UserInput' }
+      responses:
+        '201':
+          description: Utilisateur créé
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /users/{email}:
+    parameters:
+      - name: email
+        in: path
+        required: true
+        schema: { type: string, example: admin@port-russell.fr }
+    get:
+      tags: [Utilisateurs]
+      summary: Récupérer un utilisateur
+      responses:
+        '200':
+          description: L'utilisateur
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      tags: [Utilisateurs]
+      summary: Modifier un utilisateur (seuls les champs envoyés sont modifiés)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username: { type: string }
+                email: { type: string }
+                password: { type: string, minLength: 8 }
+      responses:
+        '200':
+          description: Utilisateur modifié
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+    delete:
+      tags: [Utilisateurs]
+      summary: Supprimer un utilisateur
+      responses:
+        '200': { $ref: '#/components/responses/Message' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: token
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    CatwayNumber:
+      name: id
+      in: path
+      required: true
+      description: Numéro du catway
+      schema: { type: integer, minimum: 1, example: 1 }
+
+  schemas:
+    Catway:
+      type: object
+      properties:
+        _id: { type: string }
+        catwayNumber: { type: integer, example: 1 }
+        catwayType: { type: string, enum: [long, short] }
+        catwayState: { type: string, example: bon état }
+    CatwayInput:
+      type: object
+      required: [catwayNumber, catwayType, catwayState]
+      properties:
+        catwayNumber: { type: integer, minimum: 1, example: 25 }
+        catwayType: { type: string, enum: [long, short] }
+        catwayState: { type: string, example: bon état }
+    Reservation:
+      type: object
+      properties:
+        _id: { type: string }
+        catwayNumber: { type: integer, example: 1 }
+        clientName: { type: string, example: Thomas Martin }
+        boatName: { type: string, example: Carolina }
+        startDate: { type: string, format: date-time }
+        endDate: { type: string, format: date-time }
+    ReservationInput:
+      type: object
+      required: [clientName, boatName, startDate, endDate]
+      properties:
+        clientName: { type: string, example: Jimmy }
+        boatName: { type: string, example: Le Rapide }
+        startDate: { type: string, format: date, example: '2027-06-01' }
+        endDate: { type: string, format: date, example: '2027-06-15' }
+    User:
+      type: object
+      properties:
+        _id: { type: string }
+        username: { type: string, example: admin }
+        email: { type: string, example: admin@port-russell.fr }
+    UserInput:
+      type: object
+      required: [username, email, password]
+      properties:
+        username: { type: string, minLength: 3, example: marin }
+        email: { type: string, example: marin@port-russell.fr }
+        password: { type: string, minLength: 8, example: Bateau2026! }
+    Error:
+      type: object
+      properties:
+        message: { type: string }
+
+  responses:
+    Message:
+      description: Opération réussie
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    BadRequest:
+      description: Données invalides
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Unauthorized:
+      description: Authentification requise ou identifiants incorrects
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    NotFound:
+      description: Ressource introuvable
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Conflict:
+      description: Conflit (doublon ou chevauchement de réservation)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }

@@ -5,6 +5,10 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cookieParser = require('cookie-parser');
 const methodOverride = require('method-override');
+const fs = require('fs');
+const path = require('path');
+const YAML = require('yaml');
+const swaggerUi = require('swagger-ui-express');
 
 const auth = require('./middlewares/auth');
 const authController = require('./controllers/authController');
@@ -26,6 +30,12 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 // Permet aux formulaires HTML d'envoyer des PUT et DELETE (via ?_method=...)
 app.use(methodOverride('_method'));
+
+// Documentation de l'API (Swagger), accessible publiquement
+const swaggerDocument = YAML.parse(
+  fs.readFileSync(path.join(__dirname, 'docs', 'openapi.yaml'), 'utf8')
+);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // Connexion / déconnexion (routes publiques)
 app.post('/login', authController.login);
