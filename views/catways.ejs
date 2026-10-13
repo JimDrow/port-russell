@@ -1,0 +1,67 @@
+<%- include('partials/header', { title: 'Catways' }) %>
+
+<h1>⚓ Gestion des catways</h1>
+
+<% if (success) { %><p class="success"><%= success %></p><% } %>
+<% if (error) { %><p class="alert"><%= error %></p><% } %>
+
+<!-- Formulaire de création -->
+<section class="card">
+  <h2>Ajouter un catway</h2>
+  <form action="/dashboard/catways" method="POST">
+    <label for="catwayNumber">Numéro</label>
+    <input type="number" id="catwayNumber" name="catwayNumber" min="1" required>
+
+    <label for="catwayType">Type</label>
+    <select id="catwayType" name="catwayType" required>
+      <option value="short">short</option>
+      <option value="long">long</option>
+    </select>
+
+    <label for="catwayState">État</label>
+    <input type="text" id="catwayState" name="catwayState" required>
+
+    <button type="submit" class="btn">Ajouter</button>
+  </form>
+</section>
+
+<!-- Liste des catways -->
+<section class="card">
+  <h2>Liste des catways (<%= catways.length %>)</h2>
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>N°</th>
+          <th>Type</th>
+          <th>État (modifiable)</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% catways.forEach(c => { %>
+          <tr>
+            <td><%= c.catwayNumber %></td>
+            <td><%= c.catwayType %></td>
+            <td>
+              <!-- Modifier l'état -->
+              <form action="/dashboard/catways/<%= c.catwayNumber %>?_method=PUT" method="POST" class="actions">
+                <input type="text" name="catwayState" value="<%= c.catwayState %>" required>
+                <button type="submit" class="btn btn-small">✏️ Modifier</button>
+              </form>
+            </td>
+            <td>
+              <!-- Supprimer -->
+              <form action="/dashboard/catways/<%= c.catwayNumber %>?_method=DELETE" method="POST"
+                    onsubmit="return confirm('Supprimer le catway <%= c.catwayNumber %> ?');">
+                <button type="submit" class="btn btn-small btn-danger">🗑️ Supprimer</button>
+              </form>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<%- include('partials/footer') %>
