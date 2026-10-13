@@ -2,6 +2,7 @@ const Reservation = require('../models/Reservation');
 const Catway = require('../models/Catway');
 const mongoose = require('mongoose');
 const { isOverlapping } = require('./reservationController');
+const User = require('../models/User');
 
 /**
  * Redirige vers une page en ajoutant un message dans l'URL.
@@ -201,4 +202,101 @@ exports.deleteReservation = async (req, res) => {
   if (!reservation) return redirectWithMessage(res, page, 'error', 'Réservation introuvable');
 
   redirectWithMessage(res, page, 'success', `Réservation de ${reservation.clientName} supprimée`);
+};
+
+/* ========== UTILISATEURS ========== */
+
+/**
+ * Affiche la page de gestion des utilisateurs.
+ * @route GET /dashboard/users
+ */
+exports.usersPage = async (req, res) => {
+  const users = await User.find().select('-password').sort({ username: 1 });
+  res.render('users', {
+    users,
+    success: req.query.success,
+    error: req.query.error
+  });
+};
+
+/**
+ * Crée un utilisateur depuis le formulaire.
+ * @route POST /dashboard/users
+ */
+exports.createUser = async (req, res) => {
+  const page = '/dashboard/users';
+  try {
+    const { username, email, password } = req.body;
+    await User.create({ username, email, password });
+    redirectWithMessage(res, page, 'success', `Utilisateur ${email} créé`);
+  } catch (err) {
+    const message = err.code === 11000 ? 'Cet e-mail est déjà utilisé' : err.message;
+    redirectWithMessage(res, page, 'error', message);
+  }
+};
+
+/**
+ * Affiche le formulaire de modification d'un utilisateur.
+ * @route GET /dashboard/users/:email/edit
+ */
+exports.editUserPage = async (req, res) => {
+  const editedUser = await User.findOne({ email: req.params.email.toLowerCase() }).select('-password');
+  if (!editedUser) {
+    return redirectWithMessage(res, '/dashboard/users', 'error', 'Utilisateur introuvable');
+  }
+  res.render('user-edit', { editedUser, error: req.query.error });
+};
+
+/**
+ * Modifie un utilisateur depuis le formulaire.
+ * Si l'utilisateur modifie son propre compte, il est déconnecté
+ * pour se reconnecter avec ses nouvelles informations.
+ * @route PUT /dashboard/users/:email
+ */
+exports.updateUser = async (req, res) => {
+  const listPage = '/dashboard/users';
+  const editPage = `/dashboard/users/${encodeURIComponent(req.params.email)}/edit`;
+
+  try {
+    const editedUser = await User.findOne({ email: req.params.email.toLowerCase() });
+    if (!editedUser) return redirectWithMessage(res, listPage, 'error', 'Utilisateur introuvable');
+
+    const isSelf = editedUser.email === req.user.email;
+
+    const { username, email, password } = req.body;
+    editedUser.username = username;
+    editedUser.email = email;
+    if (password) editedUser.password = password; // re-haché par le modèle
+
+    await editedUser.save();
+
+    if (isSelf) {
+      // Ses infos ont changé : on le déconnecte pour qu'il récupère un jeton à jour
+      res.clearCookie('token');
+      return res.redirect('/');
+    }
+    redirectWithMessage(res, listPage, 'success', `Utilisateur ${editedUser.email} modifié`);
+  } catch (err) {
+    const message = err.code === 11000 ? 'Cet e-mail est déjà utilisé' : err.message;
+    redirectWithMessage(res, editPage, 'error', message);
+  }
+};
+
+/**
+ * Supprime un utilisateur depuis le formulaire.
+ * Impossible de supprimer son propre compte.
+ * @route DELETE /dashboard/users/:email
+ */
+exports.deleteUser = async (req, res) => {
+  const page = '/dashboard/users';
+  const email = req.params.email.toLowerCase();
+
+  if (email === req.user.email) {
+    return redirectWithMessage(res, page, 'error', 'Vous ne pouvez pas supprimer votre propre compte');
+  }
+
+  const deleted = await User.findOneAndDelete({ email });
+  if (!deleted) return redirectWithMessage(res, page, 'error', 'Utilisateur introuvable');
+
+  redirectWithMessage(res, page, 'success', `Utilisateur ${deleted.email} supprimé`);
 };

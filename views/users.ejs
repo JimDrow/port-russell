@@ -1,0 +1,60 @@
+<%- include('partials/header', { title: 'Utilisateurs' }) %>
+
+<h1>👥 Gestion des utilisateurs</h1>
+
+<% if (success) { %><p class="success"><%= success %></p><% } %>
+<% if (error) { %><p class="alert"><%= error %></p><% } %>
+
+<!-- Formulaire de création -->
+<section class="card">
+  <h2>Ajouter un utilisateur</h2>
+  <form action="/dashboard/users" method="POST">
+    <label for="username">Nom d'utilisateur</label>
+    <input type="text" id="username" name="username" minlength="3" required>
+
+    <label for="email">E-mail</label>
+    <input type="email" id="email" name="email" required>
+
+    <label for="password">Mot de passe (8 caractères minimum)</label>
+    <input type="password" id="password" name="password" minlength="8" required>
+
+    <button type="submit" class="btn">Ajouter</button>
+  </form>
+</section>
+
+<!-- Liste des utilisateurs -->
+<section class="card">
+  <h2>Liste des utilisateurs (<%= users.length %>)</h2>
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>Nom</th>
+          <th>E-mail</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% users.forEach(u => { %>
+          <tr>
+            <td><%= u.username %></td>
+            <td><%= u.email %></td>
+            <td class="actions">
+              <a href="/dashboard/users/<%= encodeURIComponent(u.email) %>/edit" class="btn btn-small">✏️ Modifier</a>
+              <% if (u.email !== user.email) { %>
+                <form action="/dashboard/users/<%= encodeURIComponent(u.email) %>?_method=DELETE" method="POST"
+                      onsubmit="return confirm('Supprimer <%= u.email %> ?');">
+                  <button type="submit" class="btn btn-small btn-danger">🗑️ Supprimer</button>
+                </form>
+              <% } else { %>
+                <em>(vous)</em>
+              <% } %>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<%- include('partials/footer') %>

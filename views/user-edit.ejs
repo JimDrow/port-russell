@@ -1,0 +1,25 @@
+<%- include('partials/header', { title: 'Modifier un utilisateur' }) %>
+
+<h1>✏️ Modifier un utilisateur</h1>
+
+<% if (error) { %><p class="alert"><%= error %></p><% } %>
+
+<section class="card">
+  <form action="/dashboard/users/<%= encodeURIComponent(editedUser.email) %>?_method=PUT" method="POST">
+    <label for="username">Nom d'utilisateur</label>
+    <input type="text" id="username" name="username"
+           value="<%= editedUser.username %>" minlength="3" required>
+
+    <label for="email">E-mail</label>
+    <input type="email" id="email" name="email"
+           value="<%= editedUser.email %>" required>
+
+    <label for="password">Nouveau mot de passe (laisser vide pour ne pas changer)</label>
+    <input type="password" id="password" name="password" minlength="8">
+
+    <button type="submit" class="btn">Enregistrer</button>
+    <a href="/dashboard/users" class="btn btn-secondary">Annuler</a>
+  </form>
+</section>
+
+<%- include('partials/footer') %>
