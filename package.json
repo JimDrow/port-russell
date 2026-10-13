@@ -5,10 +5,11 @@
   "main": "app.js",
   "scripts": {
     "start": "node app.js",
-    "dev": "nodemon app.js"
+    "dev": "nodemon app.js",
+    "seed": "node seed.js"
   },
   "keywords": [],
-  "author": "",
+  "author": "JimDrow",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
