@@ -1,0 +1,25 @@
+@baseUrl = http://localhost:3000
+
+### 1. Accès sans être connecté (attendu : 401)
+GET {{baseUrl}}/catways
+
+### 2. Connexion avec un mauvais mot de passe (attendu : 401)
+POST {{baseUrl}}/login
+Content-Type: application/json
+
+{
+  "email": "admin@port-russell.fr",
+  "password": "mauvais"
+}
+
+### 3. Connexion avec le bon mot de passe (attendu : 200)
+POST {{baseUrl}}/login
+Content-Type: application/json
+
+{
+  "email": "admin@port-russell.fr",
+  "password": "Russell2026!"
+}
+
+### 4. Accès une fois connecté (attendu : 200)
+GET {{baseUrl}}/catways
