@@ -1,0 +1,31 @@
+<%- include('partials/header', { title: 'Accueil' }) %>
+
+<section class="hero">
+  <h1>Bienvenue à la capitainerie du port de Russell</h1>
+  <p>
+    Cette application permet au personnel de la capitainerie de gérer
+    les catways (appontements), les réservations des plaisanciers
+    et les comptes utilisateurs.
+  </p>
+  <a href="/api-docs" class="btn btn-secondary">📖 Documentation de l'API</a>
+</section>
+
+<section class="card login-card">
+  <h2>Connexion</h2>
+
+  <% if (error) { %>
+    <p class="alert">E-mail ou mot de passe incorrect.</p>
+  <% } %>
+
+  <form action="/login" method="POST">
+    <label for="email">E-mail</label>
+    <input type="email" id="email" name="email" required>
+
+    <label for="password">Mot de passe</label>
+    <input type="password" id="password" name="password" required minlength="8">
+
+    <button type="submit" class="btn">Se connecter</button>
+  </form>
+</section>
+
+<%- include('partials/footer') %>

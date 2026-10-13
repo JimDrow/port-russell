@@ -1,0 +1,51 @@
+<%- include('partials/header', { title: 'Tableau de bord' }) %>
+
+<h1>Tableau de bord</h1>
+
+<section class="grid-2">
+  <div class="card">
+    <h2>👤 Utilisateur connecté</h2>
+    <p><strong>Nom :</strong> <%= user.username %></p>
+    <p><strong>E-mail :</strong> <%= user.email %></p>
+  </div>
+
+  <div class="card">
+    <h2>📅 Aujourd'hui</h2>
+    <p><%= today %></p>
+  </div>
+</section>
+
+<section class="card">
+  <h2>⛵ Réservations en cours</h2>
+
+  <% if (reservations.length === 0) { %>
+    <p>Aucune réservation en cours aujourd'hui.</p>
+  <% } else { %>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Catway</th>
+            <th>Client</th>
+            <th>Bateau</th>
+            <th>Début</th>
+            <th>Fin</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% reservations.forEach(r => { %>
+            <tr>
+              <td><%= r.catwayNumber %></td>
+              <td><%= r.clientName %></td>
+              <td><%= r.boatName %></td>
+              <td><%= r.startDate.toLocaleDateString('fr-FR') %></td>
+              <td><%= r.endDate.toLocaleDateString('fr-FR') %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</section>
+
+<%- include('partials/footer') %>

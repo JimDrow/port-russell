@@ -10,6 +10,13 @@ const authController = require('./controllers/authController');
 
 const app = express();
 
+// Moteur de templates : les pages sont dans le dossier "views"
+app.set('view engine', 'ejs');
+app.set('views', './views');
+
+// Fichiers statiques (CSS, images...) dans le dossier "public"
+app.use(express.static('public'));
+
 // Permet de lire le JSON envoyé dans le corps des requêtes
 app.use(express.json());
 // Permet de lire les données envoyées par les formulaires HTML
@@ -26,9 +33,12 @@ app.use('/catways/:id/reservations', auth, require('./routes/reservations'));
 app.use('/catways', auth, require('./routes/catways'));
 app.use('/users', auth, require('./routes/users'));
 
-// Route de test
+// Pages du tableau de bord (protégées)
+app.use('/dashboard', auth, require('./routes/pages'));
+
+// Page d'accueil (présentation + formulaire de connexion)
 app.get('/', (req, res) => {
-  res.send('Bienvenue au port de Russell ⚓');
+  res.render('index', { error: req.query.error });
 });
 
 // Connexion à MongoDB, puis démarrage du serveur
