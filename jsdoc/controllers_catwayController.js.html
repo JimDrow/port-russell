@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: controllers/catwayController.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: controllers/catwayController.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>const Catway = require('../models/Catway');
+
+/**
+ * Transforme le paramètre :id de l'URL en numéro de catway.
+ * @param {string} id - Valeur reçue dans l'URL
+ * @returns {number|null} Le numéro, ou null s'il est invalide
+ */
+function parseCatwayNumber(id) {
+  const number = Number(id);
+  return Number.isInteger(number) &amp;&amp; number > 0 ? number : null;
+}
+
+/**
+ * Liste tous les catways.
+ * @route GET /catways
+ */
+exports.getAll = async (req, res) => {
+  const catways = await Catway.find().sort({ catwayNumber: 1 });
+  res.status(200).json(catways);
+};
+
+/**
+ * Récupère un catway par son numéro.
+ * @route GET /catways/:id
+ */
+exports.getById = async (req, res) => {
+  const number = parseCatwayNumber(req.params.id);
+  if (!number) return res.status(400).json({ message: 'Numéro de catway invalide' });
+
+  const catway = await Catway.findOne({ catwayNumber: number });
+  if (!catway) return res.status(404).json({ message: 'Catway introuvable' });
+
+  res.status(200).json(catway);
+};
+
+/**
+ * Crée un nouveau catway.
+ * @route POST /catways
+ */
+exports.create = async (req, res) => {
+  try {
+    // On ne prend que les champs attendus (style défensif)
+    const { catwayNumber, catwayType, catwayState } = req.body;
+    const catway = await Catway.create({ catwayNumber, catwayType, catwayState });
+    res.status(201).json(catway);
+  } catch (err) {
+    if (err.code === 11000) {
+      return res.status(409).json({ message: 'Ce numéro de catway existe déjà' });
+    }
+    res.status(400).json({ message: err.message });
+  }
+};
+
+/**
+ * Modifie l'état d'un catway (le numéro et le type ne sont pas modifiables).
+ * @route PUT /catways/:id
+ */
+exports.update = async (req, res) => {
+  const number = parseCatwayNumber(req.params.id);
+  if (!number) return res.status(400).json({ message: 'Numéro de catway invalide' });
+
+  const catway = await Catway.findOne({ catwayNumber: number });
+  if (!catway) return res.status(404).json({ message: 'Catway introuvable' });
+
+  try {
+    catway.catwayState = req.body.catwayState;
+    await catway.save();
+    res.status(200).json(catway);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+};
+
+/**
+ * Supprime un catway.
+ * @route DELETE /catways/:id
+ */
+exports.remove = async (req, res) => {
+  const number = parseCatwayNumber(req.params.id);
+  if (!number) return res.status(400).json({ message: 'Numéro de catway invalide' });
+
+  const catway = await Catway.findOneAndDelete({ catwayNumber: number });
+  if (!catway) return res.status(404).json({ message: 'Catway introuvable' });
+
+  res.status(200).json({ message: `Catway ${number} supprimé` });
+};</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html#TOKEN_DURATION_MS">TOKEN_DURATION_MS</a></li><li><a href="global.html#catwaysPage">catwaysPage</a></li><li><a href="global.html#create">create</a></li><li><a href="global.html#createCatway">createCatway</a></li><li><a href="global.html#createReservation">createReservation</a></li><li><a href="global.html#createUser">createUser</a></li><li><a href="global.html#dashboard">dashboard</a></li><li><a href="global.html#deleteCatway">deleteCatway</a></li><li><a href="global.html#deleteReservation">deleteReservation</a></li><li><a href="global.html#deleteUser">deleteUser</a></li><li><a href="global.html#editReservationPage">editReservationPage</a></li><li><a href="global.html#editUserPage">editUserPage</a></li><li><a href="global.html#getAll">getAll</a></li><li><a href="global.html#getByEmail">getByEmail</a></li><li><a href="global.html#getById">getById</a></li><li><a href="global.html#isOverlapping">isOverlapping</a></li><li><a href="global.html#login">login</a></li><li><a href="global.html#logout">logout</a></li><li><a href="global.html#parseCatwayNumber">parseCatwayNumber</a></li><li><a href="global.html#redirectWithMessage">redirectWithMessage</a></li><li><a href="global.html#remove">remove</a></li><li><a href="global.html#reservationsPage">reservationsPage</a></li><li><a href="global.html#seed">seed</a></li><li><a href="global.html#update">update</a></li><li><a href="global.html#updateCatway">updateCatway</a></li><li><a href="global.html#updateReservation">updateReservation</a></li><li><a href="global.html#updateUser">updateUser</a></li><li><a href="global.html#usersPage">usersPage</a></li><li><a href="global.html#withoutPassword">withoutPassword</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Tue Oct 13 2026 13:58:54 GMT+0200 (heure d’été d’Europe centrale)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

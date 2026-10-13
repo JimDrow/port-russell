@@ -4,9 +4,9 @@ const jwt = require('jsonwebtoken');
  * Middleware de protection des routes.
  * Vérifie la présence et la validité du jeton JWT (cookie ou en-tête Authorization).
  * Si le jeton est valide, les infos de l'utilisateur sont placées dans req.user.
- * @param {import('express').Request} req
- * @param {import('express').Response} res
- * @param {import('express').NextFunction} next
+ * @param {Object} req - Requête Express
+ * @param {Object} res - Réponse Express
+ * @param {Function} next - Passe au middleware suivant
  */
 module.exports = (req, res, next) => {
   // 1. On cherche le bracelet : d'abord dans le cookie...

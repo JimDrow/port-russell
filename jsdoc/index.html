@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Home</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Home</h1>
+
+    
+
+
+
+    
+
+
+    <h3> </h3>
+
+
+
+
+
+
+
+
+
+
+    
+
+
+
+
+    <section>
+        <article><h1>⚓ API du port de plaisance de Russell</h1>
+<p>Application web de gestion des réservations de catways (appontements) pour la capitainerie du port de Russell.</p>
+<h2>Fonctionnalités</h2>
+<ul>
+<li>API REST privée (authentification JWT) pour gérer les <strong>catways</strong>, les <strong>réservations</strong> et les <strong>utilisateurs</strong></li>
+<li>Tableau de bord : utilisateur connecté, date du jour, réservations en cours</li>
+<li>Pages de gestion (CRUD) pour les catways, les réservations et les utilisateurs</li>
+<li>Contrôles de validité : numéro de catway unique, type <code>long</code>/<code>short</code>, dates cohérentes, pas de double réservation, e-mail unique, mot de passe de 8 caractères minimum (haché avec bcrypt)</li>
+</ul>
+<h2>Technologies</h2>
+<p>Node.js, Express, MongoDB (Mongoose), EJS, JWT, Swagger, JSDoc</p>
+<h2>Installation</h2>
+<pre class="prettyprint source lang-bash"><code>npm install
+</code></pre>
+<p>Créer un fichier <code>.env</code> à la racine :</p>
+<pre class="prettyprint source"><code>MONGO_URI=mongodb+srv://...
+JWT_SECRET=une_phrase_secrete
+PORT=3000
+ADMIN_USERNAME=admin
+ADMIN_EMAIL=admin@exemple.fr
+ADMIN_PASSWORD=motdepasse_8_caracteres_min
+</code></pre>
+<p>Importer les données de départ et créer le compte administrateur :</p>
+<pre class="prettyprint source lang-bash"><code>npm run seed
+</code></pre>
+<p>Lancer le serveur :</p>
+<pre class="prettyprint source lang-bash"><code>npm run dev     # développement (redémarrage automatique)
+npm start       # production
+</code></pre>
+<h2>Documentation</h2>
+<ul>
+<li>Documentation de l'API (Swagger) : <code>/api-docs</code></li>
+<li>Documentation du code (JSDoc) : <code>/jsdoc</code> (générée avec <code>npm run doc</code>)</li>
+</ul>
+<h2>Routes de l'API</h2>
+<table>
+<thead>
+<tr>
+<th>Méthode</th>
+<th>Route</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>POST</td>
+<td>/login</td>
+<td>Connexion</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/logout</td>
+<td>Déconnexion</td>
+</tr>
+<tr>
+<td>GET / POST</td>
+<td>/catways</td>
+<td>Lister / créer des catways</td>
+</tr>
+<tr>
+<td>GET / PUT / DELETE</td>
+<td>/catways/:id</td>
+<td>Détail / modifier l'état / supprimer</td>
+</tr>
+<tr>
+<td>GET / POST</td>
+<td>/catways/:id/reservations</td>
+<td>Lister / créer des réservations</td>
+</tr>
+<tr>
+<td>GET / PUT / DELETE</td>
+<td>/catways/:id/reservations/:idReservation</td>
+<td>Détail / modifier / supprimer</td>
+</tr>
+<tr>
+<td>GET / POST</td>
+<td>/users</td>
+<td>Lister / créer des utilisateurs</td>
+</tr>
+<tr>
+<td>GET / PUT / DELETE</td>
+<td>/users/:email</td>
+<td>Détail / modifier / supprimer</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>Note : le brief mentionne <code>/catway/...</code> (sans « s ») sur deux routes, et <code>PUT /catways/:id/reservations</code> sans identifiant. Par cohérence REST, toutes les routes de réservation utilisent <code>/catways/:id/reservations/:idReservation</code>.</p>
+</blockquote></article>
+    </section>
+
+
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html#TOKEN_DURATION_MS">TOKEN_DURATION_MS</a></li><li><a href="global.html#catwaysPage">catwaysPage</a></li><li><a href="global.html#create">create</a></li><li><a href="global.html#createCatway">createCatway</a></li><li><a href="global.html#createReservation">createReservation</a></li><li><a href="global.html#createUser">createUser</a></li><li><a href="global.html#dashboard">dashboard</a></li><li><a href="global.html#deleteCatway">deleteCatway</a></li><li><a href="global.html#deleteReservation">deleteReservation</a></li><li><a href="global.html#deleteUser">deleteUser</a></li><li><a href="global.html#editReservationPage">editReservationPage</a></li><li><a href="global.html#editUserPage">editUserPage</a></li><li><a href="global.html#getAll">getAll</a></li><li><a href="global.html#getByEmail">getByEmail</a></li><li><a href="global.html#getById">getById</a></li><li><a href="global.html#isOverlapping">isOverlapping</a></li><li><a href="global.html#login">login</a></li><li><a href="global.html#logout">logout</a></li><li><a href="global.html#parseCatwayNumber">parseCatwayNumber</a></li><li><a href="global.html#redirectWithMessage">redirectWithMessage</a></li><li><a href="global.html#remove">remove</a></li><li><a href="global.html#reservationsPage">reservationsPage</a></li><li><a href="global.html#seed">seed</a></li><li><a href="global.html#update">update</a></li><li><a href="global.html#updateCatway">updateCatway</a></li><li><a href="global.html#updateReservation">updateReservation</a></li><li><a href="global.html#updateUser">updateUser</a></li><li><a href="global.html#usersPage">usersPage</a></li><li><a href="global.html#withoutPassword">withoutPassword</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Tue Oct 13 2026 13:58:54 GMT+0200 (heure d’été d’Europe centrale)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

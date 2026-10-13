@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: controllers/reservationController.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: controllers/reservationController.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>const mongoose = require('mongoose');
+const Reservation = require('../models/Reservation');
+const Catway = require('../models/Catway');
+
+/**
+ * Transforme le paramètre :id de l'URL en numéro de catway.
+ * @param {string} id - Valeur reçue dans l'URL
+ * @returns {number|null} Le numéro, ou null s'il est invalide
+ */
+function parseCatwayNumber(id) {
+  const number = Number(id);
+  return Number.isInteger(number) &amp;&amp; number > 0 ? number : null;
+}
+
+/**
+ * Vérifie si le catway est déjà réservé sur la période demandée.
+ * @param {number} catwayNumber - Numéro du catway
+ * @param {Date} startDate - Début de la période
+ * @param {Date} endDate - Fin de la période
+ * @param {string} [excludeId] - Réservation à ignorer (utile lors d'une modification)
+ * @returns {Promise&lt;boolean>} true si la période chevauche une autre réservation
+ */
+async function isOverlapping(catwayNumber, startDate, endDate, excludeId) {
+  const filter = {
+    catwayNumber,
+    startDate: { $lt: endDate },
+    endDate: { $gt: startDate }
+  };
+  if (excludeId) filter._id = { $ne: excludeId };
+  return (await Reservation.exists(filter)) !== null;
+}
+
+/**
+ * Liste les réservations d'un catway.
+ * @route GET /catways/:id/reservations
+ */
+exports.getAll = async (req, res) => {
+  const number = parseCatwayNumber(req.params.id);
+  if (!number) return res.status(400).json({ message: 'Numéro de catway invalide' });
+
+  const reservations = await Reservation.find({ catwayNumber: number }).sort({ startDate: 1 });
+  res.status(200).json(reservations);
+};
+
+/**
+ * Récupère une réservation précise d'un catway.
+ * @route GET /catways/:id/reservations/:idReservation
+ */
+exports.getById = async (req, res) => {
+  const number = parseCatwayNumber(req.params.id);
+  if (!number) return res.status(400).json({ message: 'Numéro de catway invalide' });
+  if (!mongoose.isValidObjectId(req.params.idReservation)) {
+    return res.status(400).json({ message: 'Identifiant de réservation invalide' });
+  }
+
+  const reservation = await Reservation.findOne({
+    _id: req.params.idReservation,
+    catwayNumber: number
+  });
+  if (!reservation) return res.status(404).json({ message: 'Réservation introuvable' });
+
+  res.status(200).json(reservation);
+};
+
+/**
+ * Crée une réservation pour un catway.
+ * @route POST /catways/:id/reservations
+ */
+exports.create = async (req, res) => {
+  const number = parseCatwayNumber(req.params.id);
+  if (!number) return res.status(400).json({ message: 'Numéro de catway invalide' });
+
+  // Le catway doit exister
+  const catway = await Catway.findOne({ catwayNumber: number });
+  if (!catway) return res.status(404).json({ message: 'Catway introuvable' });
+
+  try {
+    const { clientName, boatName, startDate, endDate } = req.body;
+    const reservation = new Reservation({
+      catwayNumber: number,
+      clientName,
+      boatName,
+      startDate,
+      endDate
+    });
+
+    // Vérifie les règles du modèle (champs obligatoires, dates...)
+    await reservation.validate();
+
+    if (await isOverlapping(number, reservation.startDate, reservation.endDate)) {
+      return res.status(409).json({ message: 'Ce catway est déjà réservé sur cette période' });
+    }
+
+    await reservation.save();
+    res.status(201).json(reservation);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+};
+
+/**
+ * Modifie une réservation (client, bateau, dates).
+ * @route PUT /catways/:id/reservations/:idReservation
+ */
+exports.update = async (req, res) => {
+  const number = parseCatwayNumber(req.params.id);
+  if (!number) return res.status(400).json({ message: 'Numéro de catway invalide' });
+  if (!mongoose.isValidObjectId(req.params.idReservation)) {
+    return res.status(400).json({ message: 'Identifiant de réservation invalide' });
+  }
+
+  const reservation = await Reservation.findOne({
+    _id: req.params.idReservation,
+    catwayNumber: number
+  });
+  if (!reservation) return res.status(404).json({ message: 'Réservation introuvable' });
+
+  try {
+    // On ne modifie que les champs envoyés
+    const { clientName, boatName, startDate, endDate } = req.body;
+    if (clientName !== undefined) reservation.clientName = clientName;
+    if (boatName !== undefined) reservation.boatName = boatName;
+    if (startDate !== undefined) reservation.startDate = startDate;
+    if (endDate !== undefined) reservation.endDate = endDate;
+
+    await reservation.validate();
+
+    if (await isOverlapping(number, reservation.startDate, reservation.endDate, reservation._id)) {
+      return res.status(409).json({ message: 'Ce catway est déjà réservé sur cette période' });
+    }
+
+    await reservation.save();
+    res.status(200).json(reservation);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+};
+
+/**
+ * Supprime une réservation.
+ * @route DELETE /catways/:id/reservations/:idReservation
+ */
+exports.remove = async (req, res) => {
+  const number = parseCatwayNumber(req.params.id);
+  if (!number) return res.status(400).json({ message: 'Numéro de catway invalide' });
+  if (!mongoose.isValidObjectId(req.params.idReservation)) {
+    return res.status(400).json({ message: 'Identifiant de réservation invalide' });
+  }
+
+  const reservation = await Reservation.findOneAndDelete({
+    _id: req.params.idReservation,
+    catwayNumber: number
+  });
+  if (!reservation) return res.status(404).json({ message: 'Réservation introuvable' });
+
+  res.status(200).json({ message: 'Réservation supprimée' });
+};
+
+// Exportée pour être réutilisée par les pages du tableau de bord
+exports.isOverlapping = isOverlapping;</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html#TOKEN_DURATION_MS">TOKEN_DURATION_MS</a></li><li><a href="global.html#catwaysPage">catwaysPage</a></li><li><a href="global.html#create">create</a></li><li><a href="global.html#createCatway">createCatway</a></li><li><a href="global.html#createReservation">createReservation</a></li><li><a href="global.html#createUser">createUser</a></li><li><a href="global.html#dashboard">dashboard</a></li><li><a href="global.html#deleteCatway">deleteCatway</a></li><li><a href="global.html#deleteReservation">deleteReservation</a></li><li><a href="global.html#deleteUser">deleteUser</a></li><li><a href="global.html#editReservationPage">editReservationPage</a></li><li><a href="global.html#editUserPage">editUserPage</a></li><li><a href="global.html#getAll">getAll</a></li><li><a href="global.html#getByEmail">getByEmail</a></li><li><a href="global.html#getById">getById</a></li><li><a href="global.html#isOverlapping">isOverlapping</a></li><li><a href="global.html#login">login</a></li><li><a href="global.html#logout">logout</a></li><li><a href="global.html#parseCatwayNumber">parseCatwayNumber</a></li><li><a href="global.html#redirectWithMessage">redirectWithMessage</a></li><li><a href="global.html#remove">remove</a></li><li><a href="global.html#reservationsPage">reservationsPage</a></li><li><a href="global.html#seed">seed</a></li><li><a href="global.html#update">update</a></li><li><a href="global.html#updateCatway">updateCatway</a></li><li><a href="global.html#updateReservation">updateReservation</a></li><li><a href="global.html#updateUser">updateUser</a></li><li><a href="global.html#usersPage">usersPage</a></li><li><a href="global.html#withoutPassword">withoutPassword</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Tue Oct 13 2026 13:58:54 GMT+0200 (heure d’été d’Europe centrale)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

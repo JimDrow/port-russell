@@ -6,7 +6,7 @@ const User = require('../models/User');
 
 /**
  * Redirige vers une page en ajoutant un message dans l'URL.
- * @param {import('express').Response} res
+ * @param {Object} res - Réponse Express
  * @param {string} path - Page de destination
  * @param {'success'|'error'} type - Type de message
  * @param {string} message - Texte du message

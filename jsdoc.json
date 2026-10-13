@@ -1,0 +1,13 @@
+{
+  "source": {
+    "include": ["app.js", "seed.js", "controllers", "models", "middlewares", "routes"],
+    "includePattern": ".+\\.js$",
+    "excludePattern": "(node_modules|jsdoc)"
+  },
+  "opts": {
+    "destination": "./jsdoc",
+    "recurse": true,
+    "encoding": "utf8",
+    "readme": "./README.md"
+  }
+}

@@ -22,6 +22,9 @@ app.set('views', './views');
 // Fichiers statiques (CSS, images...) dans le dossier "public"
 app.use(express.static('public'));
 
+// Documentation du code (JSDoc), générée avec "npm run doc"
+app.use('/jsdoc', express.static('jsdoc'));
+
 // Permet de lire le JSON envoyé dans le corps des requêtes
 app.use(express.json());
 // Permet de lire les données envoyées par les formulaires HTML

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: controllers/userController.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: controllers/userController.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>const User = require('../models/User');
+
+/**
+ * Retire le mot de passe d'un utilisateur avant de l'envoyer.
+ * @param {Object} user - Document utilisateur Mongoose
+ * @returns {Object} Utilisateur sans mot de passe
+ */
+function withoutPassword(user) {
+  const { password, ...rest } = user.toObject();
+  return rest;
+}
+
+/**
+ * Liste tous les utilisateurs (sans les mots de passe).
+ * @route GET /users
+ */
+exports.getAll = async (req, res) => {
+  const users = await User.find().select('-password').sort({ username: 1 });
+  res.status(200).json(users);
+};
+
+/**
+ * Récupère un utilisateur par son e-mail.
+ * @route GET /users/:email
+ */
+exports.getByEmail = async (req, res) => {
+  const user = await User.findOne({ email: req.params.email.toLowerCase() }).select('-password');
+  if (!user) return res.status(404).json({ message: 'Utilisateur introuvable' });
+
+  res.status(200).json(user);
+};
+
+/**
+ * Crée un utilisateur (le mot de passe est haché par le modèle).
+ * @route POST /users
+ */
+exports.create = async (req, res) => {
+  try {
+    const { username, email, password } = req.body;
+    const user = await User.create({ username, email, password });
+    res.status(201).json(withoutPassword(user));
+  } catch (err) {
+    if (err.code === 11000) {
+      return res.status(409).json({ message: 'Cet e-mail est déjà utilisé' });
+    }
+    res.status(400).json({ message: err.message });
+  }
+};
+
+/**
+ * Modifie un utilisateur (nom, e-mail et/ou mot de passe).
+ * @route PUT /users/:email
+ */
+exports.update = async (req, res) => {
+  const user = await User.findOne({ email: req.params.email.toLowerCase() });
+  if (!user) return res.status(404).json({ message: 'Utilisateur introuvable' });
+
+  try {
+    // On ne modifie que les champs envoyés
+    const { username, email, password } = req.body;
+    if (username !== undefined) user.username = username;
+    if (email !== undefined) user.email = email;
+    if (password) user.password = password; // sera re-haché automatiquement
+
+    await user.save();
+    res.status(200).json(withoutPassword(user));
+  } catch (err) {
+    if (err.code === 11000) {
+      return res.status(409).json({ message: 'Cet e-mail est déjà utilisé' });
+    }
+    res.status(400).json({ message: err.message });
+  }
+};
+
+/**
+ * Supprime un utilisateur.
+ * @route DELETE /users/:email
+ */
+exports.remove = async (req, res) => {
+  const user = await User.findOneAndDelete({ email: req.params.email.toLowerCase() });
+  if (!user) return res.status(404).json({ message: 'Utilisateur introuvable' });
+
+  res.status(200).json({ message: `Utilisateur ${user.email} supprimé` });
+};</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html#TOKEN_DURATION_MS">TOKEN_DURATION_MS</a></li><li><a href="global.html#catwaysPage">catwaysPage</a></li><li><a href="global.html#create">create</a></li><li><a href="global.html#createCatway">createCatway</a></li><li><a href="global.html#createReservation">createReservation</a></li><li><a href="global.html#createUser">createUser</a></li><li><a href="global.html#dashboard">dashboard</a></li><li><a href="global.html#deleteCatway">deleteCatway</a></li><li><a href="global.html#deleteReservation">deleteReservation</a></li><li><a href="global.html#deleteUser">deleteUser</a></li><li><a href="global.html#editReservationPage">editReservationPage</a></li><li><a href="global.html#editUserPage">editUserPage</a></li><li><a href="global.html#getAll">getAll</a></li><li><a href="global.html#getByEmail">getByEmail</a></li><li><a href="global.html#getById">getById</a></li><li><a href="global.html#isOverlapping">isOverlapping</a></li><li><a href="global.html#login">login</a></li><li><a href="global.html#logout">logout</a></li><li><a href="global.html#parseCatwayNumber">parseCatwayNumber</a></li><li><a href="global.html#redirectWithMessage">redirectWithMessage</a></li><li><a href="global.html#remove">remove</a></li><li><a href="global.html#reservationsPage">reservationsPage</a></li><li><a href="global.html#seed">seed</a></li><li><a href="global.html#update">update</a></li><li><a href="global.html#updateCatway">updateCatway</a></li><li><a href="global.html#updateReservation">updateReservation</a></li><li><a href="global.html#updateUser">updateUser</a></li><li><a href="global.html#usersPage">usersPage</a></li><li><a href="global.html#withoutPassword">withoutPassword</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Tue Oct 13 2026 13:58:54 GMT+0200 (heure d’été d’Europe centrale)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
