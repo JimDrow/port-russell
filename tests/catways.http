@@ -1,0 +1,40 @@
+### Créer un catway
+POST http://localhost:3000/catways
+Content-Type: application/json
+
+{
+  "catwayNumber": 25,
+  "catwayType": "long",
+  "catwayState": "bon état"
+}
+
+### Créer un catway en doublon (doit échouer : 409)
+POST http://localhost:3000/catways
+Content-Type: application/json
+
+{
+  "catwayNumber": 25,
+  "catwayType": "long",
+  "catwayState": "bon état"
+}
+
+### Créer un catway avec un mauvais type (doit échouer : 400)
+POST http://localhost:3000/catways
+Content-Type: application/json
+
+{
+  "catwayNumber": 26,
+  "catwayType": "moyen",
+  "catwayState": "bon état"
+}
+
+### Modifier l'état du catway 25
+PUT http://localhost:3000/catways/25
+Content-Type: application/json
+
+{
+  "catwayState": "planche abîmée"
+}
+
+### Supprimer le catway 25
+DELETE http://localhost:3000/catways/25
