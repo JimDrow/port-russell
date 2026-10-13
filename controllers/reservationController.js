@@ -155,3 +155,6 @@ exports.remove = async (req, res) => {
 
   res.status(200).json({ message: 'Réservation supprimée' });
 };
+
+// Exportée pour être réutilisée par les pages du tableau de bord
+exports.isOverlapping = isOverlapping;

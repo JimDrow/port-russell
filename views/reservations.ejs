@@ -1,0 +1,74 @@
+<%- include('partials/header', { title: 'Réservations' }) %>
+
+<h1>📅 Gestion des réservations</h1>
+
+<% if (success) { %><p class="success"><%= success %></p><% } %>
+<% if (error) { %><p class="alert"><%= error %></p><% } %>
+
+<!-- Formulaire de création -->
+<section class="card">
+  <h2>Ajouter une réservation</h2>
+  <form action="/dashboard/reservations" method="POST">
+    <label for="catwayNumber">Catway</label>
+    <select id="catwayNumber" name="catwayNumber" required>
+      <% catways.forEach(c => { %>
+        <option value="<%= c.catwayNumber %>">
+          N° <%= c.catwayNumber %> (<%= c.catwayType %>)
+        </option>
+      <% }) %>
+    </select>
+
+    <label for="clientName">Nom du client</label>
+    <input type="text" id="clientName" name="clientName" required>
+
+    <label for="boatName">Nom du bateau</label>
+    <input type="text" id="boatName" name="boatName" required>
+
+    <label for="startDate">Date de début</label>
+    <input type="date" id="startDate" name="startDate" required>
+
+    <label for="endDate">Date de fin</label>
+    <input type="date" id="endDate" name="endDate" required>
+
+    <button type="submit" class="btn">Ajouter</button>
+  </form>
+</section>
+
+<!-- Liste des réservations -->
+<section class="card">
+  <h2>Toutes les réservations (<%= reservations.length %>)</h2>
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>Catway</th>
+          <th>Client</th>
+          <th>Bateau</th>
+          <th>Début</th>
+          <th>Fin</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% reservations.forEach(r => { %>
+          <tr>
+            <td><%= r.catwayNumber %></td>
+            <td><%= r.clientName %></td>
+            <td><%= r.boatName %></td>
+            <td><%= r.startDate.toLocaleDateString('fr-FR') %></td>
+            <td><%= r.endDate.toLocaleDateString('fr-FR') %></td>
+            <td class="actions">
+              <a href="/dashboard/reservations/<%= r._id %>/edit" class="btn btn-small">✏️ Modifier</a>
+              <form action="/dashboard/reservations/<%= r._id %>?_method=DELETE" method="POST"
+                    onsubmit="return confirm('Supprimer la réservation de <%= r.clientName %> ?');">
+                <button type="submit" class="btn btn-small btn-danger">🗑️ Supprimer</button>
+              </form>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<%- include('partials/footer') %>

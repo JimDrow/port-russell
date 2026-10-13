@@ -1,0 +1,32 @@
+<%- include('partials/header', { title: 'Modifier une réservation' }) %>
+
+<h1>✏️ Modifier une réservation</h1>
+
+<% if (error) { %><p class="alert"><%= error %></p><% } %>
+
+<section class="card">
+  <p><strong>Catway :</strong> N° <%= reservation.catwayNumber %></p>
+
+  <form action="/dashboard/reservations/<%= reservation._id %>?_method=PUT" method="POST">
+    <label for="clientName">Nom du client</label>
+    <input type="text" id="clientName" name="clientName"
+           value="<%= reservation.clientName %>" required>
+
+    <label for="boatName">Nom du bateau</label>
+    <input type="text" id="boatName" name="boatName"
+           value="<%= reservation.boatName %>" required>
+
+    <label for="startDate">Date de début</label>
+    <input type="date" id="startDate" name="startDate"
+           value="<%= reservation.startDate.toISOString().slice(0, 10) %>" required>
+
+    <label for="endDate">Date de fin</label>
+    <input type="date" id="endDate" name="endDate"
+           value="<%= reservation.endDate.toISOString().slice(0, 10) %>" required>
+
+    <button type="submit" class="btn">Enregistrer</button>
+    <a href="/dashboard/reservations" class="btn btn-secondary">Annuler</a>
+  </form>
+</section>
+
+<%- include('partials/footer') %>

@@ -1,5 +1,7 @@
 const Reservation = require('../models/Reservation');
 const Catway = require('../models/Catway');
+const mongoose = require('mongoose');
+const { isOverlapping } = require('./reservationController');
 
 /**
  * Redirige vers une page en ajoutant un message dans l'URL.
@@ -93,4 +95,110 @@ exports.deleteCatway = async (req, res) => {
   if (!catway) return redirectWithMessage(res, '/dashboard/catways', 'error', 'Catway introuvable');
 
   redirectWithMessage(res, '/dashboard/catways', 'success', `Catway ${catway.catwayNumber} supprimé`);
+};
+
+/* ========== RÉSERVATIONS ========== */
+
+/**
+ * Affiche la page de gestion des réservations.
+ * @route GET /dashboard/reservations
+ */
+exports.reservationsPage = async (req, res) => {
+  const reservations = await Reservation.find().sort({ startDate: -1 });
+  const catways = await Catway.find().sort({ catwayNumber: 1 });
+  res.render('reservations', {
+    reservations,
+    catways,
+    success: req.query.success,
+    error: req.query.error
+  });
+};
+
+/**
+ * Crée une réservation depuis le formulaire.
+ * @route POST /dashboard/reservations
+ */
+exports.createReservation = async (req, res) => {
+  const page = '/dashboard/reservations';
+  try {
+    const { catwayNumber, clientName, boatName, startDate, endDate } = req.body;
+
+    const catway = await Catway.findOne({ catwayNumber: Number(catwayNumber) });
+    if (!catway) return redirectWithMessage(res, page, 'error', 'Catway introuvable');
+
+    const reservation = new Reservation({ catwayNumber, clientName, boatName, startDate, endDate });
+    await reservation.validate();
+
+    if (await isOverlapping(reservation.catwayNumber, reservation.startDate, reservation.endDate)) {
+      return redirectWithMessage(res, page, 'error', 'Ce catway est déjà réservé sur cette période');
+    }
+
+    await reservation.save();
+    redirectWithMessage(res, page, 'success', `Réservation de ${clientName} créée`);
+  } catch (err) {
+    redirectWithMessage(res, page, 'error', err.message);
+  }
+};
+
+/**
+ * Affiche le formulaire de modification d'une réservation.
+ * @route GET /dashboard/reservations/:id/edit
+ */
+exports.editReservationPage = async (req, res) => {
+  if (!mongoose.isValidObjectId(req.params.id)) {
+    return redirectWithMessage(res, '/dashboard/reservations', 'error', 'Réservation introuvable');
+  }
+  const reservation = await Reservation.findById(req.params.id);
+  if (!reservation) {
+    return redirectWithMessage(res, '/dashboard/reservations', 'error', 'Réservation introuvable');
+  }
+  res.render('reservation-edit', { reservation, error: req.query.error });
+};
+
+/**
+ * Modifie une réservation depuis le formulaire.
+ * @route PUT /dashboard/reservations/:id
+ */
+exports.updateReservation = async (req, res) => {
+  const listPage = '/dashboard/reservations';
+  if (!mongoose.isValidObjectId(req.params.id)) {
+    return redirectWithMessage(res, listPage, 'error', 'Réservation introuvable');
+  }
+  const editPage = `/dashboard/reservations/${req.params.id}/edit`;
+
+  try {
+    const reservation = await Reservation.findById(req.params.id);
+    if (!reservation) return redirectWithMessage(res, listPage, 'error', 'Réservation introuvable');
+
+    const { clientName, boatName, startDate, endDate } = req.body;
+    reservation.clientName = clientName;
+    reservation.boatName = boatName;
+    reservation.startDate = startDate;
+    reservation.endDate = endDate;
+    await reservation.validate();
+
+    if (await isOverlapping(reservation.catwayNumber, reservation.startDate, reservation.endDate, reservation._id)) {
+      return redirectWithMessage(res, editPage, 'error', 'Ce catway est déjà réservé sur cette période');
+    }
+
+    await reservation.save();
+    redirectWithMessage(res, listPage, 'success', 'Réservation modifiée');
+  } catch (err) {
+    redirectWithMessage(res, editPage, 'error', err.message);
+  }
+};
+
+/**
+ * Supprime une réservation depuis le formulaire.
+ * @route DELETE /dashboard/reservations/:id
+ */
+exports.deleteReservation = async (req, res) => {
+  const page = '/dashboard/reservations';
+  if (!mongoose.isValidObjectId(req.params.id)) {
+    return redirectWithMessage(res, page, 'error', 'Réservation introuvable');
+  }
+  const reservation = await Reservation.findByIdAndDelete(req.params.id);
+  if (!reservation) return redirectWithMessage(res, page, 'error', 'Réservation introuvable');
+
+  redirectWithMessage(res, page, 'success', `Réservation de ${reservation.clientName} supprimée`);
 };
