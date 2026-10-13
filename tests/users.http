@@ -1,0 +1,45 @@
+@baseUrl = http://localhost:3000
+
+### 1. Créer un utilisateur (attendu : 201)
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+  "username": "marin",
+  "email": "marin@port-russell.fr",
+  "password": "Bateau2026!"
+}
+
+### 2. Même e-mail (attendu : 409)
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+  "username": "copieur",
+  "email": "marin@port-russell.fr",
+  "password": "Bateau2026!"
+}
+
+### 3. Mot de passe trop court (attendu : 400)
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+  "username": "presse",
+  "email": "presse@port-russell.fr",
+  "password": "123"
+}
+
+### 4. Voir un utilisateur (attendu : 200)
+GET {{baseUrl}}/users/marin@port-russell.fr
+
+### 5. Modifier son nom (attendu : 200)
+PUT {{baseUrl}}/users/marin@port-russell.fr
+Content-Type: application/json
+
+{
+  "username": "capitaine"
+}
+
+### 6. Supprimer (attendu : 200)
+DELETE {{baseUrl}}/users/marin@port-russell.fr
