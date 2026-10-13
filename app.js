@@ -10,6 +10,7 @@ const app = express();
 app.use(express.json());
 
 // Routes de l'API
+app.use('/catways/:id/reservations', require('./routes/reservations'));
 app.use('/catways', require('./routes/catways'));
 
 // Route de test

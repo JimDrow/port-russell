@@ -1,0 +1,52 @@
+@baseUrl = http://localhost:3000
+
+### 1. Lister les réservations du catway 5
+GET {{baseUrl}}/catways/5/reservations
+
+### 2. Créer une réservation (attendu : 201)
+# @name creation
+POST {{baseUrl}}/catways/5/reservations
+Content-Type: application/json
+
+{
+  "clientName": "Jimmy",
+  "boatName": "Le Rapide",
+  "startDate": "2027-06-01",
+  "endDate": "2027-06-15"
+}
+
+### 3. Voir la réservation créée (attendu : 200)
+GET {{baseUrl}}/catways/5/reservations/{{creation.response.body._id}}
+
+### 4. Modifier le nom du bateau (attendu : 200)
+PUT {{baseUrl}}/catways/5/reservations/{{creation.response.body._id}}
+Content-Type: application/json
+
+{
+  "boatName": "Le Super Rapide"
+}
+
+### 5. Réserver sur la même période (attendu : 409, chevauchement)
+POST {{baseUrl}}/catways/5/reservations
+Content-Type: application/json
+
+{
+  "clientName": "Quelqu'un d'autre",
+  "boatName": "Intrus",
+  "startDate": "2027-06-10",
+  "endDate": "2027-06-20"
+}
+
+### 6. Date de fin avant le début (attendu : 400)
+POST {{baseUrl}}/catways/5/reservations
+Content-Type: application/json
+
+{
+  "clientName": "Marty McFly",
+  "boatName": "DeLorean",
+  "startDate": "2027-08-10",
+  "endDate": "2027-08-01"
+}
+
+### 7. Supprimer la réservation (attendu : 200)
+DELETE {{baseUrl}}/catways/5/reservations/{{creation.response.body._id}}
